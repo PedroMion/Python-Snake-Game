@@ -13,6 +13,7 @@ darkGreen = (0,100,0)
 lightGreen = (0,128,0)
 
 DISPLAYSURF=pygame.display.set_mode((500,500))
+font = pygame.font.SysFont("Monospace", 15, True, True)
 pygame.display.set_caption("Snake game!")
 
 class Snake(pygame.sprite.Sprite):
@@ -57,7 +58,7 @@ class Snake(pygame.sprite.Sprite):
             return False
         return True
 
-    def checkCoin(self, Coin):
+    def checkCoin(self, Coin, Text):
         collide = self.rect.colliderect(Coin.rect)
         if collide:
             newPart = pygame.image.load("Corpo.png")
@@ -66,6 +67,7 @@ class Snake(pygame.sprite.Sprite):
 
             self.bodyParts.append(newPartRect)
             Coin.newPosition()
+            Text.increaseScore()
 class Coin(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -82,8 +84,49 @@ class Coin(pygame.sprite.Sprite):
     def newPosition(self):
         self.rect.center = (random.randint(10, SCREEN_WIDTH-10), random.randint(10, SCREEN_HEIGHT-10))
 
+class Text(pygame.sprite.Sprite):
+    def __init__(self):
+        self.score = 0
+        self.time = 30
+        self.cicles = 0
+        self.scoreMessage = "Score: " + str(self.score)
+        self.timeMessage = "Time left: " + str(self.time)
+        self.scoreText = font.render(self.scoreMessage, True, (255,255,255))
+        self.timeText = font.render(self.timeMessage, True, (255,255,255))
+        self.scoreRect = self.scoreText.get_rect()
+        self.timeRect = self.timeText.get_rect()
+        self.scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+        self.timeRect.center = ((SCREEN_WIDTH // 2) + 10, (SCREEN_HEIGHT // 2) + 10)
+    
+    def update(self):
+        if self.cicles == FPS:
+            self.time -= 1
+            self.cicles = 0
+        else:
+            self.cicles += 1
+
+        self.scoreMessage = "Score: " + str(self.score)
+        self.timeMessage = "Time left: " + str(self.time)
+
+        self.scoreText = font.render(self.scoreMessage, True, (255,255,255))
+        self.timeText = font.render(self.timeMessage, True, (255,255,255))
+
+        self.scoreRect = self.scoreText.get_rect()
+        self.timeRect = self.timeText.get_rect()
+
+        self.scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+        self.timeRect.center = ((SCREEN_WIDTH // 2) + 10, (SCREEN_HEIGHT // 2) + 10)
+
+    def draw(self, surface):
+        surface.blit(self.scoreText, self.scoreRect)
+        surface.blit(self.timeText, self.timeRect)
+    
+    def increaseScore(self):
+        self.score += 1
+
 Player1 = Snake()
 Coin1 = Coin()
+Text = Text()
 
 playerAlive = True
 while playerAlive: #principal loop
@@ -94,12 +137,14 @@ while playerAlive: #principal loop
         pygame.display.update()
     Player1.update()
     Player1.move()
-    Player1.checkCoin(Coin1)
-    
+    Player1.checkCoin(Coin1, Text)
+    Text.update()
+
     DISPLAYSURF.fill((0,0,0))
 
     Player1.draw(DISPLAYSURF)
     Coin1.draw(DISPLAYSURF)
+    Text.draw(DISPLAYSURF)
 
     playerAlive = Player1.isGameRunning()
 
