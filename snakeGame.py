@@ -3,7 +3,7 @@ from pygame.locals import *
 
 pygame.init()
 
-FPS = 50
+FPS = 20
 FramePerSec = pygame.time.Clock()
 
 SCREEN_WIDTH = 500
@@ -20,10 +20,13 @@ class Snake(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load("Cabeca.png")
+        self.imageGoingLeft = pygame.transform.flip(self.image, True, False)
+        self.imageGoingUp = pygame.transform.rotate(self.image, 90)
+        self.imageGoingDown = pygame.transform.rotate(self.image, 270)
         self.bodyImage = pygame.image.load("Corpo.png")
         self.rect = self.image.get_rect()
         self.rect.center = (250,250)
-        self.direction = [5, 0]
+        self.direction = [15, 0]
         self.bodyParts = []
         self.positions = []
     
@@ -31,13 +34,13 @@ class Snake(pygame.sprite.Sprite):
         pressed_keys = pygame.key.get_pressed()
         
         if pressed_keys[K_UP]:
-            self.direction = [0, -5]
+            self.direction = [0, -15]
         if pressed_keys[K_DOWN]:
-            self.direction = [0, 5]
+            self.direction = [0, 15]
         if pressed_keys[K_LEFT]:
-            self.direction = [-5, 0]
+            self.direction = [-15, 0]
         if pressed_keys[K_RIGHT]:
-            self.direction = [5, 0]
+            self.direction = [15, 0]
     
     def move(self):
         self.positions.insert(0, self.rect.center)
@@ -49,7 +52,15 @@ class Snake(pygame.sprite.Sprite):
             self.bodyParts[i].center = self.positions[i]
 
     def draw(self, surface):
-        surface.blit(self.image, self.rect)
+        if(self.direction == [-15, 0]):
+            surface.blit(self.imageGoingLeft, self.rect)
+        elif(self.direction == [0, -15]):
+            surface.blit(self.imageGoingUp, self.rect)
+        elif(self.direction == [0, 15]):
+            surface.blit(self.imageGoingDown, self.rect)
+        else:
+            surface.blit(self.image, self.rect)
+
         for bodyPart in self.bodyParts:
             surface.blit(self.bodyImage, bodyPart)
     
@@ -76,16 +87,16 @@ class Coin(pygame.sprite.Sprite):
         super().__init__()
         self.image = pygame.image.load("Moeda.png")
         self.rect = self.image.get_rect()
-        self.rect.center = (random.randint(10, SCREEN_WIDTH-10), random.randint(10, SCREEN_HEIGHT-10))
+        self.rect.center = (random.randint(20, SCREEN_WIDTH-20), random.randint(20, SCREEN_HEIGHT-20))
     
     def move(self):
-        self.rect.center = (random.randint(10, SCREEN_WIDTH-10), random.randint(10, SCREEN_HEIGHT-10))
+        self.rect.center = (random.randint(20, SCREEN_WIDTH-20), random.randint(20, SCREEN_HEIGHT-20))
     
     def draw(self, surface):
         surface.blit(self.image, self.rect)
     
     def newPosition(self):
-        self.rect.center = (random.randint(10, SCREEN_WIDTH-10), random.randint(10, SCREEN_HEIGHT-10))
+        self.rect.center = (random.randint(20, SCREEN_WIDTH-20), random.randint(20, SCREEN_HEIGHT-20))
 
 class Text(pygame.sprite.Sprite):
     def __init__(self):
