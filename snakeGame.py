@@ -3,7 +3,7 @@ from pygame.locals import *
 
 pygame.init()
 
-FPS = 40
+FPS = 50
 FramePerSec = pygame.time.Clock()
 
 SCREEN_WIDTH = 500
@@ -53,8 +53,10 @@ class Snake(pygame.sprite.Sprite):
         for bodyPart in self.bodyParts:
             surface.blit(self.bodyImage, bodyPart)
     
-    def isGameRunning(self):
+    def isGameRunning(self, Text):
         if self.rect.left <= 0 or self.rect.right >= SCREEN_WIDTH or self.rect.top <= 0 or self.rect.bottom >= SCREEN_HEIGHT:
+            return False
+        if(Text.time <= 0):
             return False
         return True
 
@@ -68,6 +70,7 @@ class Snake(pygame.sprite.Sprite):
             self.bodyParts.append(newPartRect)
             Coin.newPosition()
             Text.increaseScore()
+            Text.updateTime()
 class Coin(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -87,7 +90,7 @@ class Coin(pygame.sprite.Sprite):
 class Text(pygame.sprite.Sprite):
     def __init__(self):
         self.score = 0
-        self.time = 30
+        self.time = 15
         self.cicles = 0
         self.scoreMessage = "Score: " + str(self.score)
         self.timeMessage = "Time left: " + str(self.time)
@@ -123,6 +126,15 @@ class Text(pygame.sprite.Sprite):
     
     def increaseScore(self):
         self.score += 1
+    
+    def updateTime(self):
+        if(self.score < 5):
+            self.time += 5
+            return
+        elif(self.score < 10):
+            self.time += 3
+            return
+        self.time += 2
 
 Player1 = Snake()
 Coin1 = Coin()
@@ -146,7 +158,7 @@ while playerAlive: #principal loop
     Coin1.draw(DISPLAYSURF)
     Text.draw(DISPLAYSURF)
 
-    playerAlive = Player1.isGameRunning()
+    playerAlive = Player1.isGameRunning(Text)
 
     pygame.display.update()
     FramePerSec.tick(FPS)
