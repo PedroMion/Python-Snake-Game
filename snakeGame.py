@@ -34,13 +34,17 @@ class Snake(pygame.sprite.Sprite):
         pressed_keys = pygame.key.get_pressed()
         
         if pressed_keys[K_UP]:
-            self.direction = [0, -15]
+            if self.direction != [0, 15]:
+                self.direction = [0, -15]
         if pressed_keys[K_DOWN]:
-            self.direction = [0, 15]
+            if self.direction != [0, -15]:
+                self.direction = [0, 15]
         if pressed_keys[K_LEFT]:
-            self.direction = [-15, 0]
+            if self.direction != [15, 0]:
+                self.direction = [-15, 0]
         if pressed_keys[K_RIGHT]:
-            self.direction = [15, 0]
+            if self.direction != [-15, 0]:
+                self.direction = [15, 0]
     
     def move(self):
         self.positions.insert(0, self.rect.center)
@@ -69,6 +73,8 @@ class Snake(pygame.sprite.Sprite):
             return False
         if(Text.time <= 0):
             return False
+        if(self.checkSelfColision()):
+            return False
         return True
 
     def checkCoin(self, Coin, Text):
@@ -82,6 +88,14 @@ class Snake(pygame.sprite.Sprite):
             Coin.newPosition()
             Text.increaseScore()
             Text.updateTime()
+    
+    def checkSelfColision(self):
+        for bodyPart in self.bodyParts:
+            if(self.rect.colliderect(bodyPart)):
+                return True
+        
+        return False
+    
 class Coin(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
