@@ -4,13 +4,17 @@ from pygame.locals import *
 pygame.init()
 
 FPS = 20
-FramePerSec = pygame.time.Clock()
-
 SCREEN_WIDTH = 500
 SCREEN_HEIGHT = 500
+SNAKE_SIZE_IN_PIXELS = 15
+DIRECTIONS = {
+    "right": [SNAKE_SIZE_IN_PIXELS, 0],
+    "left": [-SNAKE_SIZE_IN_PIXELS, 0],
+    "up": [0, -SNAKE_SIZE_IN_PIXELS],
+    "down": [0, SNAKE_SIZE_IN_PIXELS],
+}
 
-darkGreen = (0,100,0)
-lightGreen = (0,128,0)
+FramePerSec = pygame.time.Clock()
 
 DISPLAYSURF=pygame.display.set_mode((500,500))
 font = pygame.font.SysFont("Monospace", 15, True, True)
@@ -20,13 +24,10 @@ class Snake(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load("Cabeca.png")
-        self.imageGoingLeft = pygame.transform.flip(self.image, True, False)
-        self.imageGoingUp = pygame.transform.rotate(self.image, 90)
-        self.imageGoingDown = pygame.transform.rotate(self.image, 270)
         self.bodyImage = pygame.image.load("Corpo.png")
         self.rect = self.image.get_rect()
         self.rect.center = (250,250)
-        self.direction = [15, 0]
+        self.direction = DIRECTIONS["right"]
         self.bodyParts = []
         self.positions = []
     
@@ -34,17 +35,17 @@ class Snake(pygame.sprite.Sprite):
         pressed_keys = pygame.key.get_pressed()
         
         if pressed_keys[K_UP]:
-            if self.direction != [0, 15]:
-                self.direction = [0, -15]
+            if self.direction != DIRECTIONS["down"]:
+                self.direction = DIRECTIONS["up"]
         if pressed_keys[K_DOWN]:
-            if self.direction != [0, -15]:
-                self.direction = [0, 15]
+            if self.direction != DIRECTIONS["up"]:
+                self.direction = DIRECTIONS["down"]
         if pressed_keys[K_LEFT]:
-            if self.direction != [15, 0]:
-                self.direction = [-15, 0]
+            if self.direction != DIRECTIONS["right"]:
+                self.direction = DIRECTIONS["left"]
         if pressed_keys[K_RIGHT]:
-            if self.direction != [-15, 0]:
-                self.direction = [15, 0]
+            if self.direction != DIRECTIONS["left"]:
+                self.direction = DIRECTIONS["right"]
     
     def move(self):
         self.positions.insert(0, self.rect.center)
@@ -56,28 +57,23 @@ class Snake(pygame.sprite.Sprite):
             self.bodyParts[i].center = self.positions[i]
 
     def draw(self, surface):
-        if(self.direction == [-15, 0]):
-            surface.blit(self.imageGoingLeft, self.rect)
-        elif(self.direction == [0, -15]):
-            surface.blit(self.imageGoingUp, self.rect)
-        elif(self.direction == [0, 15]):
-            surface.blit(self.imageGoingDown, self.rect)
-        else:
-            surface.blit(self.image, self.rect)
+        currentImage = self.getCurrentImage()
+        
+        surface.blit(currentImage, self.rect)
 
         for bodyPart in self.bodyParts:
             surface.blit(self.bodyImage, bodyPart)
     
-    def isGameRunning(self, Text):
+    def isGameRunning(self, Status):
         if self.rect.left <= 0 or self.rect.right >= SCREEN_WIDTH or self.rect.top <= 0 or self.rect.bottom >= SCREEN_HEIGHT:
             return False
-        if(Text.time <= 0):
+        if(Status.time <= 0):
             return False
         if(self.checkSelfColision()):
             return False
         return True
 
-    def checkCoin(self, Coin, Text):
+    def checkCoin(self, Coin, Status):
         collide = self.rect.colliderect(Coin.rect)
         if collide:
             newPart = pygame.image.load("Corpo.png")
@@ -86,8 +82,8 @@ class Snake(pygame.sprite.Sprite):
 
             self.bodyParts.append(newPartRect)
             Coin.newPosition()
-            Text.increaseScore()
-            Text.updateTime()
+            Status.increaseScore()
+            Status.updateTime()
     
     def checkSelfColision(self):
         for bodyPart in self.bodyParts:
@@ -95,15 +91,23 @@ class Snake(pygame.sprite.Sprite):
                 return True
         
         return False
+
+    def getCurrentImage(self):
+        currentImage = self.image
+        if(self.direction == DIRECTIONS["left"]):
+            currentImage = pygame.transform.flip(self.image, True, False)
+        elif(self.direction == DIRECTIONS["up"]):
+            currentImage = pygame.transform.rotate(self.image, 90)
+        elif(self.direction == DIRECTIONS["down"]):
+            currentImage = pygame.transform.rotate(self.image, 270)
+        
+        return currentImage
     
 class Coin(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load("Moeda.png")
         self.rect = self.image.get_rect()
-        self.rect.center = (random.randint(20, SCREEN_WIDTH-20), random.randint(20, SCREEN_HEIGHT-20))
-    
-    def move(self):
         self.rect.center = (random.randint(20, SCREEN_WIDTH-20), random.randint(20, SCREEN_HEIGHT-20))
     
     def draw(self, surface):
@@ -113,44 +117,44 @@ class Coin(pygame.sprite.Sprite):
         self.rect.center = (random.randint(20, SCREEN_WIDTH-20), random.randint(20, SCREEN_HEIGHT-20))
 
 class Text(pygame.sprite.Sprite):
+    def __init__(self, message, rectPosition):
+        self.message = message
+        self.pygameText = font.render(self.message, True, (255,255,255))
+        self.rect = self.pygameText.get_rect()
+        self.rect.center = rectPosition
+    
+    def update(self, message, rectPosition):
+        self.message = message
+        self.pygameText = font.render(self.message, True, (255,255,255))
+        self.rect = self.pygameText.get_rect()
+        self.rect.center = rectPosition
+    
+    def draw(self, surface):
+        surface.blit(self.pygameText, self.rect)
+
+class Status(pygame.sprite.Sprite):
     def __init__(self):
         self.score = 0
-        self.time = 15
         self.cicles = 0
-        self.scoreMessage = "Score: " + str(self.score)
-        self.timeMessage = "Time left: " + str(self.time)
-        self.scoreText = font.render(self.scoreMessage, True, (255,255,255))
-        self.timeText = font.render(self.timeMessage, True, (255,255,255))
-        self.scoreRect = self.scoreText.get_rect()
-        self.timeRect = self.timeText.get_rect()
-        self.scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
-        self.timeRect.center = ((SCREEN_WIDTH // 2) + 10, (SCREEN_HEIGHT // 2) + 10)
+        self.time = 15
+        self.scoreText = Text("Score: " + str(self.score), (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+        self.timeText = Text("Time left: " + str(self.time), ((SCREEN_WIDTH // 2) + SNAKE_SIZE_IN_PIXELS, (SCREEN_HEIGHT // 2) + SNAKE_SIZE_IN_PIXELS))
     
     def update(self):
         if self.cicles == FPS:
             self.time -= 1
             self.cicles = 0
+            self.timeText.update("Time left: " + str(self.time), ((SCREEN_WIDTH // 2) + 10, (SCREEN_HEIGHT // 2) + 10))
         else:
             self.cicles += 1
-
-        self.scoreMessage = "Score: " + str(self.score)
-        self.timeMessage = "Time left: " + str(self.time)
-
-        self.scoreText = font.render(self.scoreMessage, True, (255,255,255))
-        self.timeText = font.render(self.timeMessage, True, (255,255,255))
-
-        self.scoreRect = self.scoreText.get_rect()
-        self.timeRect = self.timeText.get_rect()
-
-        self.scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
-        self.timeRect.center = ((SCREEN_WIDTH // 2) + 10, (SCREEN_HEIGHT // 2) + 10)
-
-    def draw(self, surface):
-        surface.blit(self.scoreText, self.scoreRect)
-        surface.blit(self.timeText, self.timeRect)
     
+    def draw(self, surface):
+        self.scoreText.draw(surface)
+        self.timeText.draw(surface)
+
     def increaseScore(self):
         self.score += 1
+        self.scoreText.update("Score: " + str(self.score), (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
     
     def updateTime(self):
         if(self.score < 5):
@@ -161,9 +165,9 @@ class Text(pygame.sprite.Sprite):
             return
         self.time += 2
 
-Player1 = Snake()
-Coin1 = Coin()
-Text = Text()
+Player = Snake()
+GameCoin = Coin()
+GameStatus = Status()
 
 playerAlive = True
 while playerAlive: #principal loop
@@ -172,18 +176,18 @@ while playerAlive: #principal loop
             pygame.quit()
             sys.exit()
         pygame.display.update()
-    Player1.update()
-    Player1.move()
-    Player1.checkCoin(Coin1, Text)
-    Text.update()
+    Player.update()
+    Player.move()
+    Player.checkCoin(GameCoin, GameStatus)
+    GameStatus.update()
 
     DISPLAYSURF.fill((0,0,0))
 
-    Player1.draw(DISPLAYSURF)
-    Coin1.draw(DISPLAYSURF)
-    Text.draw(DISPLAYSURF)
+    Player.draw(DISPLAYSURF)
+    GameCoin.draw(DISPLAYSURF)
+    GameStatus.draw(DISPLAYSURF)
 
-    playerAlive = Player1.isGameRunning(Text)
+    playerAlive = Player.isGameRunning(GameStatus)
 
     pygame.display.update()
     FramePerSec.tick(FPS)
